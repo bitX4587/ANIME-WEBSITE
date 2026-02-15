@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnimePage — Watch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="nav-brand" href="index.html"><span>ANIME</span>PAGE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="anime-list.html">Anime List</a></li>
+        <li><a href="manga.html">Manga</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <input
+          type="text"
+          id="navSearch"
+          placeholder="Search anime..."
+          onkeydown="navSearchGo(event)"
+        />
+        <button onclick="navSearchGo({ key: 'Enter' })">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="anime-list.html">Anime List</a>
+      <a href="manga.html">Manga</a>
+      <a href="community.html">Community</a>
+      <a href="about.html">About</a>
+    </div>
+
+    <div class="page">
+      <div class="watch-layout">
+        <!-- PLAYER + INFO -->
+        <div class="watch-player-wrap">
+          <div class="player-box" id="playerBox">
+            <div class="player-placeholder">
+              <div class="play-big">▶</div>
+              <p>Select an episode to start watching</p>
+            </div>
+          </div>
+
+          <div class="watch-info" id="watchInfo" style="display: none">
+            <h1 class="watch-title" id="watchTitle"></h1>
+            <div class="watch-meta" id="watchMeta"></div>
+            <p class="watch-synopsis" id="watchSynopsis"></p>
+            <button
+              class="synopsis-toggle"
+              id="synopsisToggle"
+              onclick="toggleSynopsis()"
+            >
+              Show more
+            </button>
+          </div>
+
+          <div id="episodeSection" style="display: none">
+            <div class="episode-label">Episodes</div>
+            <div class="ep-grid" id="epGrid"></div>
+          </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="watch-sidebar">
+          <div class="sidebar-title">Recommended</div>
+          <div id="sidebarList"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-brand"><span>ANIME</span>PAGE</div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="anime-list.html">Anime List</a>
+        <a href="manga.html">Manga</a>
+        <a href="community.html">Community</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-cr">© 2024 AnimePage. All rights reserved.</div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+    <script src="index.js"></script>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const malId = params.get("id");
+      let currentEp = parseInt(params.get("ep")) || 1;
+      let totalEps = 1;
+
+      async function loadWatch() {
+        if (!malId) {
+          showToast("No anime ID provided.");
+          return;
+        }
+
+        try {
+          const res = await fetch(`https://api.jikan.moe/v4/anime/${malId}`);
+          const data = await res.json();
+          const a = data.data;
+
+          document.title = `Watch ${a.title} — AnimePage`;
+
+          // Info
+          document.getElementById("watchTitle").textContent = a.title;
+          document.getElementById("watchSynopsis").textContent =
+            a.synopsis || "No synopsis.";
+          document.getElementById("watchMeta").innerHTML = `
+        <span class="score">★ ${a.score || "N/A"}</span>
+        <span>${a.type || "TV"}</span>
+        <span>${a.status || ""}</span>
+        <span>${a.year || ""}</span>
+      `;
+          document.getElementById("watchInfo").style.display = "flex";
+
+          totalEps = a.episodes || 24;
+          buildEpGrid(totalEps);
+          playEpisode(currentEp);
+
+          // Sidebar
+          loadSidebar();
+        } catch (e) {
+          showToast("Failed to load anime info.");
+        }
+      }
+
+      function buildEpGrid(total) {
+        const grid = document.getElementById("epGrid");
+        document.getElementById("episodeSection").style.display = "block";
+        grid.innerHTML = "";
+        for (let i = 1; i <= total; i++) {
+          grid.insertAdjacentHTML(
+            "beforeend",
+            `<button class="ep-btn ${i === currentEp ? "active" : ""}" onclick="playEpisode(${i})" id="ep-${i}">${i}</button>`,
+          );
+        }
+      }
+
+      function playEpisode(ep) {
+        currentEp = ep;
+        // Update active
+        document
+          .querySelectorAll(".ep-btn")
+          .forEach((b) => b.classList.remove("active"));
+        const btn = document.getElementById(`ep-${ep}`);
+        if (btn) {
+          btn.classList.add("active");
+          btn.scrollIntoView({ block: "nearest" });
+        }
+
+        // AutoEmbed free player — uses MAL ID
+        const embedUrl = `https://2embed.cc/embed/anime/watch?id=${malId}&e=${ep}`;
+        document.getElementById("playerBox").innerHTML = `
+      <iframe src="${embedUrl}" allowfullscreen allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    `;
+
+        window.history.replaceState({}, "", `?id=${malId}&ep=${ep}`);
+        showToast(`▶ Playing Episode ${ep}`);
+      }
+
+      function toggleSynopsis() {
+        const el = document.getElementById("watchSynopsis");
+        const btn = document.getElementById("synopsisToggle");
+        el.classList.toggle("expanded");
+        btn.textContent = el.classList.contains("expanded")
+          ? "Show less"
+          : "Show more";
+      }
+
+      async function loadSidebar() {
+        try {
+          const res = await fetch(
+            "https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10",
+          );
+          const data = await res.json();
+          const list = document.getElementById("sidebarList");
+          data.data.forEach((a) => {
+            list.insertAdjacentHTML(
+              "beforeend",
+              `
+          <a class="sidebar-card" href="watch.html?id=${a.mal_id}">
+            <img src="${a.images.jpg.small_image_url}" alt="${a.title}" onerror="this.src='https://via.placeholder.com/60x80'"/>
+            <div class="sidebar-card-info">
+              <div class="sidebar-card-title">${a.title}</div>
+              <div class="sidebar-card-meta">★ ${a.score || "N/A"} · ${a.type || "TV"}</div>
+            </div>
+          </a>
+        `,
+            );
+          });
+        } catch (e) {}
+      }
+
+      loadWatch();
+    </script>
+  </body>
+</html>

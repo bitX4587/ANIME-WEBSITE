@@ -3,103 +3,172 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Anime List</title>
+    <title>AnimePage — Anime List</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
-
   <body>
-    <div class="side-header"></div>
+    <nav class="navbar">
+      <a class="nav-brand" href="index.html"><span>ANIME</span>PAGE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="anime-list.html" class="active">Anime List</a></li>
+        <li><a href="manga.html">Manga</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <input
+          type="text"
+          id="navSearch"
+          placeholder="Search anime..."
+          onkeydown="navSearchGo(event)"
+        />
+        <button onclick="navSearchGo({ key: 'Enter' })">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="anime-list.html" class="active">Anime List</a>
+      <a href="manga.html">Manga</a>
+      <a href="community.html">Community</a>
+      <a href="about.html">About</a>
+    </div>
 
-    <header class="header">
-      <div class="header-header">
-        <div class="header-left">
-          <div class="logo">
-            <a class="logo-a" href="index.html">
-              <h1 class="logo-h1-list">MOST</h1>
-              <h1 class="logo-h1-list">POPULAR</h1>
-            </a>
-          </div>
+    <div class="page">
+      <div class="list-page">
+        <div class="section-header" style="margin-bottom: 20px">
+          <div class="section-title">📋 Anime List</div>
+        </div>
+
+        <div class="list-controls" id="filterRow">
+          <button
+            class="filter-pill active"
+            onclick="setFilter('airing', this)"
+          >
+            Airing
+          </button>
+          <button class="filter-pill" onclick="setFilter('bypopularity', this)">
+            Popular
+          </button>
+          <button class="filter-pill" onclick="setFilter('favorite', this)">
+            Favorites
+          </button>
+          <button class="filter-pill" onclick="setFilter('upcoming', this)">
+            Upcoming
+          </button>
+          <button class="filter-pill" onclick="setFilter('', this)">
+            All Time
+          </button>
+        </div>
+
+        <div class="anime-grid" id="animeGrid"></div>
+
+        <div class="load-more-wrap">
+          <button
+            class="load-more-btn"
+            id="loadMoreBtn"
+            onclick="loadMoreList()"
+          >
+            <i class="fas fa-plus"></i> Load More
+          </button>
         </div>
       </div>
-    </header>
-
-    <main>
-      <!-- 🔥 EMPTY container — JS will fill this -->
-      <section id="animeList" class="anime-list-section-grid"></section>
-    </main>
-
-    <div style="text-align: center; margin: 30px">
-      <button
-        onclick="loadMore()"
-        style="
-          padding: 15px 30px;
-          font-size: 18px;
-          border-radius: 5px;
-          cursor: pointer;
-        "
-      >
-        Load More Anime
-      </button>
     </div>
 
     <footer class="footer">
-      <div class="footer-left">
-        <div class="CR">© Copyright Reserved 2024</div>
+      <div class="footer-brand"><span>ANIME</span>PAGE</div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="anime-list.html">Anime List</a>
+        <a href="manga.html">Manga</a>
+        <a href="community.html">Community</a>
+        <a href="about.html">About</a>
       </div>
+      <div class="footer-cr">© 2024 AnimePage. All rights reserved.</div>
     </footer>
 
-    <!-- 🔥 SCRIPT AT BOTTOM (IMPORTANT) -->
+    <div class="toast" id="toast"></div>
+    <script src="index.js"></script>
     <script>
-      let page = 1;
+      let listPage = 1;
+      let listFilter = "airing";
 
-      async function loadAnime() {
+      // Check URL params for filter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("filter")) {
+        listFilter = urlParams.get("filter");
+        document.querySelectorAll(".filter-pill").forEach((p) => {
+          p.classList.toggle(
+            "active",
+            p.textContent.trim().toLowerCase() === listFilter,
+          );
+        });
+      }
+
+      function setFilter(filter, btn) {
+        listFilter = filter;
+        listPage = 1;
+        document
+          .querySelectorAll(".filter-pill")
+          .forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("animeGrid").innerHTML = "";
+        loadListPage();
+      }
+
+      async function loadListPage() {
+        const grid = document.getElementById("animeGrid");
+        const btn = document.getElementById("loadMoreBtn");
+        btn.disabled = true;
+        btn.textContent = "Loading...";
+
+        // Show skeletons on first load
+        if (listPage === 1) {
+          grid.innerHTML = Array(12)
+            .fill(
+              '<div class="skeleton" style="aspect-ratio:2/3;border-radius:14px"></div>',
+            )
+            .join("");
+        }
+
         try {
+          const filterParam = listFilter ? `&filter=${listFilter}` : "";
           const res = await fetch(
-            `https://api.jikan.moe/v4/top/anime?page=${page}`,
+            `https://api.jikan.moe/v4/top/anime?page=${listPage}&limit=20${filterParam}`,
           );
           const data = await res.json();
-
-          const container = document.getElementById("animeList");
-
-          data.data.forEach((anime) => {
-            const synopsis = anime.synopsis
-              ? anime.synopsis.substring(0, 120) + "..."
-              : "No description available.";
-
-            const card = `
-        <div class="anime-list-section-container">
-          <div class="anime-container">
-
-            <a href="${anime.url}" target="_blank">
-              <img class="container-image"
-                src="${anime.images.jpg.image_url}"
-                alt="${anime.title}" />
-            </a>
-
-            <div class="anime-container-info">
-              <h1 class="info-h1">${anime.title}</h1>
-              <p class="info-p">${synopsis}</p>
-            </div>
-
-          </div>
-        </div>
-      `;
-
-            container.insertAdjacentHTML("beforeend", card);
+          if (listPage === 1) grid.innerHTML = "";
+          data.data.forEach((anime, i) => {
+            grid.insertAdjacentHTML("beforeend", buildCard(anime, i));
           });
-        } catch (err) {
-          console.error(err);
+          listPage++;
+        } catch (e) {
+          showToast("Failed to load anime.");
         }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Load More';
       }
 
-      // Load first page
-      loadAnime();
-
-      // Load more button
-      function loadMore() {
-        page++;
-        loadAnime();
+      function loadMoreList() {
+        loadListPage();
       }
+
+      loadListPage();
     </script>
   </body>
 </html>

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnimePage — Manga</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .manga-card {
+        position: relative;
+        border-radius: var(--radius);
+        overflow: hidden;
+        cursor: pointer;
+        background: var(--bg3);
+        transition:
+          transform 0.3s,
+          box-shadow 0.3s;
+        animation: fadeUp 0.4s ease both;
+      }
+      .manga-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+      .manga-card img {
+        width: 100%;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s;
+      }
+      .manga-card:hover img {
+        transform: scale(1.06);
+      }
+      .manga-card-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 40px 12px 12px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.92));
+      }
+      .manga-card-title {
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.3;
+        margin-bottom: 4px;
+      }
+      .manga-card-meta {
+        font-size: 11px;
+        color: var(--orange);
+        font-weight: 600;
+      }
+      .manga-card-score {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(0, 0, 0, 0.75);
+        border: 1px solid rgba(255, 107, 0, 0.4);
+        border-radius: 6px;
+        padding: 3px 7px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--orange);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="nav-brand" href="index.html"><span>ANIME</span>PAGE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="anime-list.html">Anime List</a></li>
+        <li><a href="manga.html" class="active">Manga</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <input
+          type="text"
+          id="navSearch"
+          placeholder="Search anime..."
+          onkeydown="navSearchGo(event)"
+        />
+        <button onclick="navSearchGo({ key: 'Enter' })">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="anime-list.html">Anime List</a>
+      <a href="manga.html" class="active">Manga</a>
+      <a href="community.html">Community</a>
+      <a href="about.html">About</a>
+    </div>
+
+    <div class="page">
+      <div class="list-page">
+        <div class="section-header" style="margin-bottom: 20px">
+          <div class="section-title">📚 Manga</div>
+        </div>
+
+        <div class="list-controls">
+          <button
+            class="filter-pill active"
+            onclick="setMangaFilter('bypopularity', this)"
+          >
+            Popular
+          </button>
+          <button
+            class="filter-pill"
+            onclick="setMangaFilter('favorite', this)"
+          >
+            Favorites
+          </button>
+          <button
+            class="filter-pill"
+            onclick="setMangaFilter('publishing', this)"
+          >
+            Publishing
+          </button>
+          <button
+            class="filter-pill"
+            onclick="setMangaFilter('upcoming', this)"
+          >
+            Upcoming
+          </button>
+        </div>
+
+        <div class="anime-grid" id="mangaGrid"></div>
+
+        <div class="load-more-wrap">
+          <button
+            class="load-more-btn"
+            id="mangaLoadBtn"
+            onclick="loadMoreManga()"
+          >
+            <i class="fas fa-plus"></i> Load More
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-brand"><span>ANIME</span>PAGE</div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="anime-list.html">Anime List</a>
+        <a href="manga.html">Manga</a>
+        <a href="community.html">Community</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-cr">© 2024 AnimePage. All rights reserved.</div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+    <script src="index.js"></script>
+    <script>
+      let mangaPage = 1;
+      let mangaFilter = "bypopularity";
+
+      function setMangaFilter(filter, btn) {
+        mangaFilter = filter;
+        mangaPage = 1;
+        document
+          .querySelectorAll(".filter-pill")
+          .forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("mangaGrid").innerHTML = "";
+        loadMangaPage();
+      }
+
+      async function loadMangaPage() {
+        const grid = document.getElementById("mangaGrid");
+        const btn = document.getElementById("mangaLoadBtn");
+        btn.disabled = true;
+        btn.textContent = "Loading...";
+
+        if (mangaPage === 1) {
+          grid.innerHTML = Array(12)
+            .fill(
+              '<div class="skeleton" style="aspect-ratio:2/3;border-radius:14px"></div>',
+            )
+            .join("");
+        }
+
+        try {
+          const res = await fetch(
+            `https://api.jikan.moe/v4/top/manga?page=${mangaPage}&limit=20&filter=${mangaFilter}`,
+          );
+          const data = await res.json();
+          if (mangaPage === 1) grid.innerHTML = "";
+
+          data.data.forEach((manga, i) => {
+            const img =
+              manga.images?.jpg?.large_image_url ||
+              manga.images?.jpg?.image_url ||
+              "";
+            const score = manga.score ? `★ ${manga.score}` : "";
+            const vols = manga.volumes
+              ? `${manga.volumes} vols`
+              : manga.type || "Manga";
+            const url = manga.url || "#";
+
+            grid.insertAdjacentHTML(
+              "beforeend",
+              `
+          <a href="${url}" target="_blank" rel="noopener" style="text-decoration:none">
+            <div class="manga-card" style="animation-delay:${i * 0.04}s">
+              <img src="${img}" alt="${manga.title}" loading="lazy"
+                   onerror="this.src='https://placehold.co/300x420/1a1a26/888?text=No+Image'"/>
+              ${score ? `<div class="manga-card-score">${score}</div>` : ""}
+              <div class="manga-card-overlay">
+                <div class="manga-card-title">${manga.title}</div>
+                <div class="manga-card-meta">${vols}</div>
+              </div>
+            </div>
+          </a>
+        `,
+            );
+          });
+          mangaPage++;
+        } catch (e) {
+          showToast("Failed to load manga.");
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Load More';
+      }
+
+      function loadMoreManga() {
+        loadMangaPage();
+      }
+      loadMangaPage();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnimePage — Community</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .community-wrap {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+
+      /* Post composer */
+      .composer {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .composer-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--orange);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 800;
+        flex-shrink: 0;
+        color: white;
+      }
+      .composer textarea {
+        flex: 1;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        resize: none;
+        outline: none;
+        min-height: 80px;
+        transition: border-color 0.2s;
+      }
+      .composer textarea:focus {
+        border-color: var(--orange);
+      }
+      .composer textarea::placeholder {
+        color: var(--muted);
+      }
+      .composer-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .composer-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .tag-chip {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+      }
+      .tag-chip:hover,
+      .tag-chip.selected {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: white;
+      }
+      .post-btn {
+        background: var(--orange);
+        border: none;
+        border-radius: 50px;
+        padding: 10px 24px;
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition:
+          background 0.2s,
+          transform 0.15s;
+      }
+      .post-btn:hover {
+        background: var(--orange-lt);
+        transform: scale(1.02);
+      }
+
+      /* Feed */
+      .feed-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .post-card {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 16px;
+        animation: fadeUp 0.35s ease both;
+        transition: border-color 0.2s;
+      }
+      .post-card:hover {
+        border-color: rgba(255, 107, 0, 0.25);
+      }
+
+      .post-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .post-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 800;
+        flex-shrink: 0;
+        color: white;
+      }
+      .post-meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .post-username {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .post-time {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .post-tag {
+        background: rgba(255, 107, 0, 0.15);
+        border: 1px solid rgba(255, 107, 0, 0.3);
+        border-radius: 50px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--orange);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .post-text {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text);
+        margin-bottom: 14px;
+      }
+      .post-anime-ref {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .post-anime-ref:hover {
+        border-color: var(--orange);
+      }
+      .post-anime-ref img {
+        width: 36px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 6px;
+      }
+      .post-anime-ref-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .post-anime-ref-title {
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .post-anime-ref-meta {
+        font-size: 11px;
+        color: var(--orange);
+        font-weight: 600;
+      }
+
+      .post-actions {
+        display: flex;
+        gap: 20px;
+      }
+      .post-action-btn {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 0;
+        transition: color 0.15s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .post-action-btn:hover {
+        color: var(--orange);
+      }
+      .post-action-btn.liked {
+        color: var(--red);
+      }
+
+      /* Sidebar */
+      .community-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 24px;
+      }
+      .sidebar-box {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+      .sidebar-box h3 {
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      .trending-tag {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .trending-tag:last-child {
+        border-bottom: none;
+      }
+      .trending-tag:hover .tt-name {
+        color: var(--orange);
+      }
+      .tt-name {
+        font-weight: 600;
+        transition: color 0.15s;
+      }
+      .tt-count {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 768px) {
+        .community-layout {
+          grid-template-columns: 1fr;
+        }
+        .community-sidebar {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="nav-brand" href="index.html"><span>ANIME</span>PAGE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="anime-list.html">Anime List</a></li>
+        <li><a href="manga.html">Manga</a></li>
+        <li><a href="community.html" class="active">Community</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <input
+          type="text"
+          id="navSearch"
+          placeholder="Search anime..."
+          onkeydown="navSearchGo(event)"
+        />
+        <button onclick="navSearchGo({ key: 'Enter' })">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="anime-list.html">Anime List</a>
+      <a href="manga.html">Manga</a>
+      <a href="community.html" class="active">Community</a>
+      <a href="about.html">About</a>
+    </div>
+
+    <div class="page">
+      <div class="community-wrap">
+        <div class="section-header" style="margin-bottom: 24px">
+          <div class="section-title">💬 Community</div>
+        </div>
+
+        <div class="community-layout">
+          <!-- MAIN FEED -->
+          <div>
+            <!-- Composer -->
+            <div class="composer">
+              <div class="composer-top">
+                <div class="avatar" id="myAvatar">A</div>
+                <textarea
+                  id="postInput"
+                  placeholder="Share your thoughts, reviews, or recommendations..."
+                ></textarea>
+              </div>
+              <div class="composer-actions">
+                <div class="composer-tags" id="tagRow">
+                  <button
+                    class="tag-chip"
+                    onclick="selectTag(this, 'Discussion')"
+                  >
+                    Discussion
+                  </button>
+                  <button class="tag-chip" onclick="selectTag(this, 'Review')">
+                    Review
+                  </button>
+                  <button
+                    class="tag-chip"
+                    onclick="selectTag(this, 'Recommendation')"
+                  >
+                    Recommendation
+                  </button>
+                  <button
+                    class="tag-chip"
+                    onclick="selectTag(this, 'Question')"
+                  >
+                    Question
+                  </button>
+                </div>
+                <button class="post-btn" onclick="submitPost()">
+                  <i class="fas fa-paper-plane"></i> Post
+                </button>
+              </div>
+            </div>
+
+            <!-- Feed filter -->
+            <div class="feed-controls">
+              <button
+                class="filter-pill active"
+                onclick="setFeedFilter('all', this)"
+              >
+                All
+              </button>
+              <button
+                class="filter-pill"
+                onclick="setFeedFilter('Discussion', this)"
+              >
+                Discussion
+              </button>
+              <button
+                class="filter-pill"
+                onclick="setFeedFilter('Review', this)"
+              >
+                Review
+              </button>
+              <button
+                class="filter-pill"
+                onclick="setFeedFilter('Recommendation', this)"
+              >
+                Recommendation
+              </button>
+              <button
+                class="filter-pill"
+                onclick="setFeedFilter('Question', this)"
+              >
+                Question
+              </button>
+            </div>
+
+            <div id="feedContainer"></div>
+          </div>
+
+          <!-- SIDEBAR -->
+          <div class="community-sidebar">
+            <div class="sidebar-box">
+              <h3>🔥 Trending Topics</h3>
+              <div class="trending-tag">
+                <span class="tt-name">#OnePiece</span
+                ><span class="tt-count">2.4k posts</span>
+              </div>
+              <div class="trending-tag">
+                <span class="tt-name">#DemonSlayer</span
+                ><span class="tt-count">1.9k posts</span>
+              </div>
+              <div class="trending-tag">
+                <span class="tt-name">#AttackOnTitan</span
+                ><span class="tt-count">1.7k posts</span>
+              </div>
+              <div class="trending-tag">
+                <span class="tt-name">#JujutsuKaisen</span
+                ><span class="tt-count">1.5k posts</span>
+              </div>
+              <div class="trending-tag">
+                <span class="tt-name">#Naruto</span
+                ><span class="tt-count">1.2k posts</span>
+              </div>
+              <div class="trending-tag">
+                <span class="tt-name">#Vinland</span
+                ><span class="tt-count">980 posts</span>
+              </div>
+            </div>
+            <div class="sidebar-box">
+              <h3>⭐ Today's Top Anime</h3>
+              <div id="sidebarTopAnime"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-brand"><span>ANIME</span>PAGE</div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="anime-list.html">Anime List</a>
+        <a href="manga.html">Manga</a>
+        <a href="community.html">Community</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-cr">© 2024 AnimePage. All rights reserved.</div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+    <script src="index.js"></script>
+    <script>
+      // ── State ──
+      const COLORS = [
+        "#e63946",
+        "#2a9d8f",
+        "#e9c46a",
+        "#457b9d",
+        "#8338ec",
+        "#06d6a0",
+      ];
+      let selectedTag = "";
+      let feedFilter = "all";
+      let posts = [
+        {
+          id: 1,
+          user: "SakuraChan",
+          color: "#e63946",
+          tag: "Review",
+          time: "2h ago",
+          text: "Just finished Vinland Saga Season 2 and I am absolutely speechless. The character development of Thorfinn is some of the best I have ever seen in any medium. 10/10 no contest.",
+          anime: {
+            id: 37521,
+            title: "Vinland Saga",
+            img: "https://cdn.myanimelist.net/images/anime/1500/103005.jpg",
+            score: "8.7",
+          },
+          likes: 42,
+          liked: false,
+          comments: 7,
+        },
+        {
+          id: 2,
+          user: "OtakuKing99",
+          color: "#8338ec",
+          tag: "Discussion",
+          time: "4h ago",
+          text: "Hot take: Demon Slayer's animation is amazing but the story is pretty average. Fight me.",
+          anime: {
+            id: 38000,
+            title: "Demon Slayer",
+            img: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+            score: "8.7",
+          },
+          likes: 118,
+          liked: false,
+          comments: 34,
+        },
+        {
+          id: 3,
+          user: "AniMaster",
+          color: "#2a9d8f",
+          tag: "Recommendation",
+          time: "6h ago",
+          text: "If you have not watched Mushishi yet, please stop everything and go watch it right now. Criminally underrated masterpiece.",
+          anime: null,
+          likes: 67,
+          liked: false,
+          comments: 12,
+        },
+        {
+          id: 4,
+          user: "MangaReader",
+          color: "#e9c46a",
+          tag: "Question",
+          time: "8h ago",
+          text: "Which One Piece arc should I start with if I want to get into the series? I heard the first few arcs are slow. Any tips?",
+          anime: {
+            id: 21,
+            title: "One Piece",
+            img: "https://cdn.myanimelist.net/images/anime/6/73245.jpg",
+            score: "8.7",
+          },
+          likes: 23,
+          liked: false,
+          comments: 55,
+        },
+        {
+          id: 5,
+          user: "NightOwlWatcher",
+          color: "#06d6a0",
+          tag: "Review",
+          time: "1d ago",
+          text: "Attack on Titan finale was a rollercoaster. Controversial ending but I respect what they tried to do. The journey was worth every minute.",
+          anime: {
+            id: 16498,
+            title: "Attack on Titan",
+            img: "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+            score: "9.0",
+          },
+          likes: 204,
+          liked: false,
+          comments: 89,
+        },
+      ];
+
+      function getInitial(name) {
+        return name.charAt(0).toUpperCase();
+      }
+
+      function timeAgo() {
+        const mins = Math.floor(Math.random() * 55) + 1;
+        return `${mins}m ago`;
+      }
+
+      function renderFeed() {
+        const container = document.getElementById("feedContainer");
+        const filtered =
+          feedFilter === "all"
+            ? posts
+            : posts.filter((p) => p.tag === feedFilter);
+        if (filtered.length === 0) {
+          container.innerHTML =
+            '<p style="color:var(--muted);text-align:center;padding:40px">No posts yet in this category.</p>';
+          return;
+        }
+        container.innerHTML = filtered
+          .map(
+            (p, i) => `
+    <div class="post-card" style="animation-delay:${i * 0.06}s" id="post-${p.id}">
+      <div class="post-header">
+        <div class="post-avatar" style="background:${p.color}">${getInitial(p.user)}</div>
+        <div class="post-meta">
+          <div class="post-username">${p.user}</div>
+          <div class="post-time">${p.time}</div>
+        </div>
+        <span class="post-tag">${p.tag}</span>
+      </div>
+      <p class="post-text">${p.text}</p>
+      ${
+        p.anime
+          ? `
+        <a class="post-anime-ref" href="watch.html?id=${p.anime.id}" style="display:flex">
+          <img src="${p.anime.img}" alt="${p.anime.title}" onerror="this.style.display='none'"/>
+          <div class="post-anime-ref-info">
+            <div class="post-anime-ref-title">${p.anime.title}</div>
+            <div class="post-anime-ref-meta">★ ${p.anime.score} · Click to watch</div>
+          </div>
+          <i class="fas fa-play" style="color:var(--orange);align-self:center;margin-left:auto"></i>
+        </a>`
+          : ""
+      }
+      <div class="post-actions">
+        <button class="post-action-btn ${p.liked ? "liked" : ""}" onclick="toggleLike(${p.id})">
+          <i class="fa${p.liked ? "s" : "r"} fa-heart"></i> ${p.likes}
+        </button>
+        <button class="post-action-btn"><i class="far fa-comment"></i> ${p.comments}</button>
+        <button class="post-action-btn" onclick="sharePost(${p.id})"><i class="fas fa-share"></i> Share</button>
+      </div>
+    </div>
+  `,
+          )
+          .join("");
+      }
+
+      function toggleLike(id) {
+        const post = posts.find((p) => p.id === id);
+        if (!post) return;
+        post.liked = !post.liked;
+        post.likes += post.liked ? 1 : -1;
+        renderFeed();
+      }
+
+      function sharePost(id) {
+        showToast("Link copied to clipboard!");
+      }
+
+      function selectTag(btn, tag) {
+        document
+          .querySelectorAll(".tag-chip")
+          .forEach((c) => c.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedTag = tag;
+      }
+
+      function submitPost() {
+        const input = document.getElementById("postInput");
+        const text = input.value.trim();
+        if (!text) {
+          showToast("Write something first!");
+          return;
+        }
+        posts.unshift({
+          id: Date.now(),
+          user: "You",
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          tag: selectedTag || "Discussion",
+          time: "Just now",
+          text,
+          anime: null,
+          likes: 0,
+          liked: false,
+          comments: 0,
+        });
+        input.value = "";
+        selectedTag = "";
+        document
+          .querySelectorAll(".tag-chip")
+          .forEach((c) => c.classList.remove("selected"));
+        renderFeed();
+        showToast("✅ Post shared!");
+      }
+
+      function setFeedFilter(filter, btn) {
+        feedFilter = filter;
+        document
+          .querySelectorAll(".feed-controls .filter-pill")
+          .forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        renderFeed();
+      }
+
+      // Load sidebar top anime
+      async function loadSidebarAnime() {
+        try {
+          const res = await fetch(
+            "https://api.jikan.moe/v4/top/anime?limit=5&filter=airing",
+          );
+          const data = await res.json();
+          const box = document.getElementById("sidebarTopAnime");
+          box.innerHTML = data.data
+            .map(
+              (a) => `
+      <a href="watch.html?id=${a.mal_id}" class="trending-tag" style="text-decoration:none;color:inherit">
+        <span class="tt-name">${a.title}</span>
+        <span class="tt-count">★ ${a.score || "N/A"}</span>
+      </a>
+    `,
+            )
+            .join("");
+        } catch (e) {}
+      }
+
+      renderFeed();
+      loadSidebarAnime();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnimePage — About</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .about-wrap {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 60px 40px;
+      }
+      .about-hero {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+      .about-hero h1 {
+        font-size: 48px;
+        font-weight: 900;
+        margin-bottom: 16px;
+      }
+      .about-hero h1 span {
+        color: var(--orange);
+      }
+      .about-hero p {
+        font-size: 18px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .about-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
+        margin-top: 40px;
+      }
+      .about-card {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        text-align: center;
+      }
+      .about-card .icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+      }
+      .about-card h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .about-card p {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .about-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 40px 0;
+      }
+      .tech-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .tech-badge {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="nav-brand" href="index.html"><span>ANIME</span>PAGE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="anime-list.html">Anime List</a></li>
+        <li><a href="manga.html">Manga</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html" class="active">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <input
+          type="text"
+          id="navSearch"
+          placeholder="Search anime..."
+          onkeydown="navSearchGo(event)"
+        />
+        <button onclick="navSearchGo({ key: 'Enter' })">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="anime-list.html">Anime List</a>
+      <a href="manga.html">Manga</a>
+      <a href="community.html">Community</a>
+      <a href="about.html" class="active">About</a>
+    </div>
+
+    <div class="page">
+      <div class="about-wrap">
+        <div class="about-hero">
+          <h1><span>ANIME</span>PAGE</h1>
+          <p>
+            Your free, ad-light anime discovery platform. Browse thousands of
+            titles, get info from MyAnimeList, and watch episodes — all in one
+            place.
+          </p>
+        </div>
+
+        <div class="about-cards">
+          <div class="about-card">
+            <div class="icon">📡</div>
+            <h3>Live Data</h3>
+            <p>
+              Powered by the Jikan API — real-time MyAnimeList data, ratings,
+              synopses and more.
+            </p>
+          </div>
+          <div class="about-card">
+            <div class="icon">▶️</div>
+            <h3>Free Streaming</h3>
+            <p>
+              Embedded episode player using a free streaming API. No sign-up, no
+              subscription.
+            </p>
+          </div>
+          <div class="about-card">
+            <div class="icon">🔍</div>
+            <h3>Smart Search</h3>
+            <p>
+              Search any anime by title and get instant results with cover art
+              and details.
+            </p>
+          </div>
+          <div class="about-card">
+            <div class="icon">📱</div>
+            <h3>Mobile Ready</h3>
+            <p>
+              Fully responsive — works great on phones, tablets, and desktops.
+            </p>
+          </div>
+        </div>
+
+        <div class="about-divider"></div>
+        <h2
+          style="
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+          "
+        >
+          Built With
+        </h2>
+        <div class="tech-list">
+          <span class="tech-badge">HTML5</span>
+          <span class="tech-badge">CSS3</span>
+          <span class="tech-badge">Vanilla JS</span>
+          <span class="tech-badge">Jikan API v4</span>
+          <span class="tech-badge">2embed.cc</span>
+          <span class="tech-badge">Font Awesome</span>
+          <span class="tech-badge">Google Fonts</span>
+        </div>
+
+        <div class="about-divider"></div>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.7">
+          <strong style="color: var(--text)">Disclaimer:</strong> AnimePage is a
+          fan-made project. Anime data is sourced from MyAnimeList via the Jikan
+          API. Video streaming is provided by third-party embed services. We do
+          not host any content. All rights belong to their respective owners.
+        </p>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-brand"><span>ANIME</span>PAGE</div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="anime-list.html">Anime List</a>
+        <a href="manga.html">Manga</a>
+        <a href="community.html">Community</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-cr">© 2024 AnimePage. All rights reserved.</div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+    <script src="index.js"></script>
+  </body>
+</html>

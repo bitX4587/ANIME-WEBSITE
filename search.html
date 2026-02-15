@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnimePage — Search</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="nav-brand" href="index.html"><span>ANIME</span>PAGE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="anime-list.html">Anime List</a></li>
+        <li><a href="manga.html">Manga</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <input
+          type="text"
+          id="navSearch"
+          placeholder="Search anime..."
+          onkeydown="navSearchGo(event)"
+        />
+        <button onclick="navSearchGo({ key: 'Enter' })">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="anime-list.html">Anime List</a>
+      <a href="manga.html">Manga</a>
+      <a href="community.html">Community</a>
+      <a href="about.html">About</a>
+    </div>
+
+    <div class="page">
+      <div class="search-page">
+        <div class="search-hero">
+          <h1>Find Your <span>Anime</span></h1>
+          <div class="search-bar-large">
+            <i class="fas fa-search" style="color: var(--muted)"></i>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search for an anime title..."
+              autofocus
+              onkeydown="if (event.key === 'Enter') doSearch();"
+            />
+            <button onclick="doSearch()">Search</button>
+          </div>
+        </div>
+
+        <div class="search-results-count" id="resultsCount"></div>
+        <div class="anime-grid" id="searchGrid"></div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-brand"><span>ANIME</span>PAGE</div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="anime-list.html">Anime List</a>
+        <a href="manga.html">Manga</a>
+        <a href="community.html">Community</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-cr">© 2024 AnimePage. All rights reserved.</div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+    <script src="index.js"></script>
+    <script>
+      // Pre-fill from URL
+      const q = new URLSearchParams(window.location.search).get("q");
+      if (q) {
+        document.getElementById("searchInput").value = q;
+        doSearch(q);
+      }
+
+      async function doSearch(query) {
+        const term =
+          query || document.getElementById("searchInput").value.trim();
+        if (!term) return;
+        window.history.replaceState({}, "", `?q=${encodeURIComponent(term)}`);
+        const grid = document.getElementById("searchGrid");
+        const count = document.getElementById("resultsCount");
+        grid.innerHTML = Array(8)
+          .fill(
+            '<div class="skeleton" style="aspect-ratio:2/3;border-radius:14px"></div>',
+          )
+          .join("");
+        count.textContent = "Searching...";
+        try {
+          const res = await fetch(
+            `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(term)}&limit=20&sfw=true`,
+          );
+          const data = await res.json();
+          grid.innerHTML = "";
+          count.textContent = `${data.data.length} results for "${term}"`;
+          if (data.data.length === 0) {
+            grid.innerHTML =
+              '<p style="color:var(--muted);grid-column:1/-1">No results found.</p>';
+            return;
+          }
+          data.data.forEach((anime, i) => {
+            grid.insertAdjacentHTML("beforeend", buildCard(anime, i));
+          });
+        } catch (e) {
+          showToast("Search failed. Try again.");
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anime List</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div class="side-header"></div>
+
+    <header class="header">
+      <div class="header-header">
+        <div class="header-left">
+          <div class="logo">
+            <a class="logo-a" href="index.html">
+              <h1 class="logo-h1-list">MOST</h1>
+              <h1 class="logo-h1-list">POPULAR</h1>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- 🔥 EMPTY container — JS will fill this -->
+      <section id="animeList" class="anime-list-section-grid"></section>
+    </main>
+
+    <div style="text-align: center; margin: 30px">
+      <button
+        onclick="loadMore()"
+        style="
+          padding: 15px 30px;
+          font-size: 18px;
+          border-radius: 5px;
+          cursor: pointer;
+        "
+      >
+        Load More Anime
+      </button>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-left">
+        <div class="CR">© Copyright Reserved 2024</div>
+      </div>
+    </footer>
+
+    <!-- 🔥 SCRIPT AT BOTTOM (IMPORTANT) -->
+    <script>
+      let page = 1;
+
+      async function loadAnime() {
+        try {
+          const res = await fetch(
+            `https://api.jikan.moe/v4/top/anime?page=${page}`,
+          );
+          const data = await res.json();
+
+          const container = document.getElementById("animeList");
+
+          data.data.forEach((anime) => {
+            const synopsis = anime.synopsis
+              ? anime.synopsis.substring(0, 120) + "..."
+              : "No description available.";
+
+            const card = `
+        <div class="anime-list-section-container">
+          <div class="anime-container">
+
+            <a href="${anime.url}" target="_blank">
+              <img class="container-image"
+                src="${anime.images.jpg.image_url}"
+                alt="${anime.title}" />
+            </a>
+
+            <div class="anime-container-info">
+              <h1 class="info-h1">${anime.title}</h1>
+              <p class="info-p">${synopsis}</p>
+            </div>
+
+          </div>
+        </div>
+      `;
+
+            container.insertAdjacentHTML("beforeend", card);
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // Load first page
+      loadAnime();
+
+      // Load more button
+      function loadMore() {
+        page++;
+        loadAnime();
+      }
+    </script>
+  </body>
+</html>

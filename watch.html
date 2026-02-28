@@ -14,6 +14,168 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <link rel="stylesheet" href="style.css" />
+    <!-- HLS.js for M3U8 stream playback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
+    <style>
+      /* ── HiAnime-specific additions on top of style.css ── */
+
+      /* Server / language tab row */
+      .stream-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 14px;
+        padding: 12px 16px;
+        background: var(--bg2);
+        border-radius: var(--radius);
+      }
+      .ctrl-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .ctrl-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted, #888);
+        margin-right: 2px;
+      }
+      .srv-btn {
+        padding: 5px 14px;
+        background: var(--bg3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        color: var(--muted, #888);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+      .srv-btn:hover {
+        border-color: var(--orange);
+        color: var(--text);
+      }
+      .srv-btn.active {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: #fff;
+      }
+
+      /* Video player box */
+      .hianime-player {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #000;
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .hianime-player video {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .player-msg {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.88);
+        color: var(--muted, #888);
+        font-size: 14px;
+        text-align: center;
+        padding: 24px;
+      }
+      .player-msg.hidden {
+        display: none;
+      }
+      .player-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 107, 0, 0.2);
+        border-top-color: var(--orange);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Episode grid — extends .ep-grid from style.css */
+      .ep-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        max-height: 220px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+      .ep-btn {
+        min-width: 42px;
+        height: 36px;
+        padding: 0 8px;
+        background: var(--bg3);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+      .ep-btn:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+      }
+      .ep-btn.active {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: #fff;
+      }
+      .ep-btn.filler {
+        opacity: 0.5;
+      }
+
+      /* Episode search */
+      .ep-search {
+        width: 100%;
+        padding: 7px 12px;
+        margin-bottom: 8px;
+        background: var(--bg3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 13px;
+        outline: none;
+        font-family: inherit;
+      }
+      .ep-search:focus {
+        border-color: var(--orange);
+      }
+
+      /* Subtitle select */
+      .subtitle-select {
+        padding: 5px 10px;
+        background: var(--bg3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 12px;
+        outline: none;
+        font-family: inherit;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
     <nav class="navbar">
@@ -50,15 +212,83 @@
 
     <div class="page">
       <div class="watch-layout">
-        <!-- PLAYER + INFO -->
+        <!-- ── Left: Player + Info + Episodes ── -->
         <div class="watch-player-wrap">
-          <div class="player-box" id="playerBox">
-            <div class="player-placeholder">
-              <div class="play-big">▶</div>
-              <p>Select an episode to start watching</p>
+          <!-- Server / language controls -->
+          <div
+            class="stream-controls"
+            id="streamControls"
+            style="display: none"
+          >
+            <div class="ctrl-group">
+              <span class="ctrl-label">Lang:</span>
+              <button
+                class="srv-btn active"
+                data-cat="sub"
+                onclick="switchCategory('sub')"
+              >
+                SUB
+              </button>
+              <button
+                class="srv-btn"
+                data-cat="dub"
+                onclick="switchCategory('dub')"
+              >
+                DUB
+              </button>
+              <button
+                class="srv-btn"
+                data-cat="raw"
+                onclick="switchCategory('raw')"
+              >
+                RAW
+              </button>
+            </div>
+            <div class="ctrl-group">
+              <span class="ctrl-label">Server:</span>
+              <button
+                class="srv-btn active"
+                data-srv="hd-1"
+                onclick="switchServer('hd-1')"
+              >
+                HD-1
+              </button>
+              <button
+                class="srv-btn"
+                data-srv="hd-2"
+                onclick="switchServer('hd-2')"
+              >
+                HD-2
+              </button>
+            </div>
+            <div class="ctrl-group" id="subGroup" style="display: none">
+              <span class="ctrl-label">Subs:</span>
+              <select
+                class="subtitle-select"
+                id="subSelect"
+                onchange="switchSubtitle(this.value)"
+              >
+                <option value="">Off</option>
+              </select>
             </div>
           </div>
 
+          <!-- Video player -->
+          <div class="hianime-player" id="playerBox">
+            <video id="mainVideo" controls preload="metadata"></video>
+            <div class="player-msg" id="playerMsg">
+              <div
+                class="player-spinner"
+                id="playerSpinner"
+                style="display: none"
+              ></div>
+              <span id="playerMsgText"
+                >Select an episode to start watching</span
+              >
+            </div>
+          </div>
+
+          <!-- Anime info (from Jikan as metadata fallback) -->
           <div class="watch-info" id="watchInfo" style="display: none">
             <h1 class="watch-title" id="watchTitle"></h1>
             <div class="watch-meta" id="watchMeta"></div>
@@ -72,13 +302,21 @@
             </button>
           </div>
 
+          <!-- Episodes -->
           <div id="episodeSection" style="display: none">
             <div class="episode-label">Episodes</div>
+            <input
+              class="ep-search"
+              id="epSearch"
+              type="text"
+              placeholder="Search episode number or title…"
+              oninput="filterEpisodes(this.value)"
+            />
             <div class="ep-grid" id="epGrid"></div>
           </div>
         </div>
 
-        <!-- SIDEBAR -->
+        <!-- ── Sidebar: Recommended ── -->
         <div class="watch-sidebar">
           <div class="sidebar-title">Recommended</div>
           <div id="sidebarList"></div>
@@ -101,81 +339,357 @@
     <div class="toast" id="toast"></div>
     <script src="index.js"></script>
     <script>
-      const params = new URLSearchParams(window.location.search);
-      const malId = params.get("id");
-      let currentEp = parseInt(params.get("ep")) || 1;
-      let totalEps = 1;
+      // ── HiAnime API ───────────────────────────────────────────────
+      // Public instance: https://api.hianime.to (aniwatch-api v2)
+      const HIANIME_BASE = "https://api.hianime.to";
+      const JIKAN_BASE = "https://api.jikan.moe/v4";
 
+      const HiAnime = {
+        async search(query, page = 1) {
+          const res = await fetch(
+            `${HIANIME_BASE}/api/v2/hianime/search?q=${encodeURIComponent(query)}&page=${page}`,
+          );
+          const json = await res.json();
+          if (!json.success) throw new Error("HiAnime search failed");
+          return json.data; // { animes, totalPages, hasNextPage }
+        },
+        async getInfo(animeId) {
+          const res = await fetch(
+            `${HIANIME_BASE}/api/v2/hianime/anime/${encodeURIComponent(animeId)}`,
+          );
+          const json = await res.json();
+          if (!json.success) throw new Error("HiAnime getInfo failed");
+          return json.data; // { anime, seasons, relatedAnimes, recommendedAnimes }
+        },
+        async getEpisodes(animeId) {
+          const res = await fetch(
+            `${HIANIME_BASE}/api/v2/hianime/anime/${encodeURIComponent(animeId)}/episodes`,
+          );
+          const json = await res.json();
+          if (!json.success) throw new Error("HiAnime getEpisodes failed");
+          return json.data; // { totalEpisodes, episodes: [{number, title, episodeId, isFiller}] }
+        },
+        async getSources(episodeId, server = "hd-1", category = "sub") {
+          const p = new URLSearchParams({
+            animeEpisodeId: episodeId,
+            server,
+            category,
+          });
+          const res = await fetch(
+            `${HIANIME_BASE}/api/v2/hianime/episode/sources?${p}`,
+          );
+          const json = await res.json();
+          if (!json.success) throw new Error("HiAnime getSources failed");
+          return json.data; // { sources:[{url,type,quality}], tracks, headers, intro, outro }
+        },
+      };
+
+      // ── Page state ────────────────────────────────────────────────
+      const urlParams = new URLSearchParams(window.location.search);
+      const malId = urlParams.get("id");
+      let hiAnimeId = urlParams.get("hiid") || null;
+      let currentEp = parseInt(urlParams.get("ep")) || 1;
+      let currentCat = "sub";
+      let currentSrv = "hd-1";
+      let allEpisodes = [];
+      let hlsInstance = null;
+
+      // ── Init ──────────────────────────────────────────────────────
       async function loadWatch() {
-        if (!malId) {
-          showToast("No anime ID provided.");
+        if (!malId && !hiAnimeId) {
+          setPlayerMsg("No anime ID provided.", false);
           return;
         }
 
+        setPlayerMsg("Loading anime info…", true);
+
+        // 1. Get Jikan metadata (for info panel + sidebar)
+        if (malId) loadJikanInfo();
+
+        // 2. Resolve HiAnime ID if we don't have it
+        if (!hiAnimeId && malId) await resolveHiAnimeId();
+
+        if (!hiAnimeId) {
+          setPlayerMsg(
+            "⚠️ Could not find this anime on HiAnime. Try passing ?hiid=slug directly.",
+            false,
+          );
+          return;
+        }
+
+        // 3. Load episode list
+        await loadEpisodes();
+
+        // 4. Show controls
+        document.getElementById("streamControls").style.display = "flex";
+      }
+
+      // ── Jikan metadata (info panel) ───────────────────────────────
+      async function loadJikanInfo() {
         try {
-          const res = await fetch(`https://api.jikan.moe/v4/anime/${malId}`);
+          const res = await fetch(`${JIKAN_BASE}/anime/${malId}`);
           const data = await res.json();
           const a = data.data;
 
           document.title = `Watch ${a.title} — AnimePage`;
-
-          // Info
           document.getElementById("watchTitle").textContent = a.title;
           document.getElementById("watchSynopsis").textContent =
             a.synopsis || "No synopsis.";
           document.getElementById("watchMeta").innerHTML = `
-        <span class="score">★ ${a.score || "N/A"}</span>
-        <span>${a.type || "TV"}</span>
-        <span>${a.status || ""}</span>
-        <span>${a.year || ""}</span>
-      `;
+            <span class="score">★ ${a.score || "N/A"}</span>
+            <span>${a.type || "TV"}</span>
+            <span>${a.status || ""}</span>
+            <span>${a.year || ""}</span>`;
           document.getElementById("watchInfo").style.display = "flex";
 
-          totalEps = a.episodes || 24;
-          buildEpGrid(totalEps);
-          playEpisode(currentEp);
-
-          // Sidebar
           loadSidebar();
         } catch (e) {
-          showToast("Failed to load anime info.");
+          /* non-critical */
         }
       }
 
-      function buildEpGrid(total) {
-        const grid = document.getElementById("epGrid");
-        document.getElementById("episodeSection").style.display = "block";
-        grid.innerHTML = "";
-        for (let i = 1; i <= total; i++) {
-          grid.insertAdjacentHTML(
-            "beforeend",
-            `<button class="ep-btn ${i === currentEp ? "active" : ""}" onclick="playEpisode(${i})" id="ep-${i}">${i}</button>`,
+      // ── Resolve HiAnime slug from MAL title ───────────────────────
+      async function resolveHiAnimeId() {
+        try {
+          const jRes = await fetch(`${JIKAN_BASE}/anime/${malId}`);
+          const jData = await jRes.json();
+          const title = jData.data?.title_english || jData.data?.title || "";
+          if (!title) return;
+
+          const { animes } = await HiAnime.search(title, 1);
+          if (animes?.length) hiAnimeId = animes[0].id;
+        } catch (e) {
+          console.warn("HiAnime ID resolution failed:", e);
+        }
+      }
+
+      // ── Load episodes ─────────────────────────────────────────────
+      async function loadEpisodes() {
+        try {
+          const { totalEpisodes, episodes } =
+            await HiAnime.getEpisodes(hiAnimeId);
+          allEpisodes = episodes;
+          buildEpGrid(episodes);
+          document.getElementById("episodeSection").style.display = "block";
+
+          // Auto-play requested episode
+          const target =
+            episodes.find((e) => e.number === currentEp) || episodes[0];
+          if (target) playEpisode(target.episodeId, target.number);
+        } catch (e) {
+          setPlayerMsg(
+            "❌ Failed to load episodes. The anime may not be on HiAnime.",
+            false,
           );
         }
       }
 
-      function playEpisode(ep) {
-        currentEp = ep;
-        // Update active
+      function buildEpGrid(episodes) {
+        const grid = document.getElementById("epGrid");
+        grid.innerHTML = episodes
+          .map(
+            (ep) => `
+          <button class="ep-btn ${ep.isFiller ? "filler" : ""} ${ep.number === currentEp ? "active" : ""}"
+                  id="ep-${ep.number}"
+                  title="${ep.title || "Episode " + ep.number}"
+                  onclick="playEpisode('${ep.episodeId}', ${ep.number})">
+            ${ep.number}
+          </button>`,
+          )
+          .join("");
+
+        setTimeout(
+          () =>
+            document
+              .getElementById(`ep-${currentEp}`)
+              ?.scrollIntoView({ block: "nearest", behavior: "smooth" }),
+          100,
+        );
+      }
+
+      function filterEpisodes(val) {
+        const q = val.trim().toLowerCase();
+        const filtered = q
+          ? allEpisodes.filter(
+              (e) =>
+                String(e.number).includes(q) ||
+                (e.title || "").toLowerCase().includes(q),
+            )
+          : allEpisodes;
+        buildEpGrid(filtered);
+      }
+
+      // ── Play episode (fetch HLS source + load into player) ────────
+      async function playEpisode(episodeId, epNum) {
+        currentEp = epNum;
+
+        // Update button states
         document
           .querySelectorAll(".ep-btn")
           .forEach((b) => b.classList.remove("active"));
-        const btn = document.getElementById(`ep-${ep}`);
-        if (btn) {
-          btn.classList.add("active");
-          btn.scrollIntoView({ block: "nearest" });
+        document.getElementById(`ep-${epNum}`)?.classList.add("active");
+
+        window.history.replaceState(
+          {},
+          "",
+          `?id=${malId || ""}&hiid=${hiAnimeId}&ep=${epNum}`,
+        );
+        setPlayerMsg(`Loading Episode ${epNum}…`, true);
+
+        try {
+          const src = await HiAnime.getSources(
+            episodeId,
+            currentSrv,
+            currentCat,
+          );
+          const m3u8 =
+            src.sources?.find((s) => s.type === "hls")?.url ||
+            src.sources?.[0]?.url;
+
+          if (!m3u8) {
+            setPlayerMsg(
+              "⚠️ No stream available for this server/language. Try another option.",
+              false,
+            );
+            return;
+          }
+
+          loadHLS(m3u8, src.headers || {});
+          setupSubtitles(src.tracks || []);
+          hidePlayerMsg();
+          showToast(
+            `▶ Episode ${epNum} — ${currentCat.toUpperCase()} / ${currentSrv.toUpperCase()}`,
+          );
+        } catch (e) {
+          setPlayerMsg(`❌ Stream failed: ${e.message}`, false);
         }
-
-        // AutoEmbed free player — uses MAL ID
-        const embedUrl = `https://2embed.cc/embed/anime/watch?id=${malId}&e=${ep}`;
-        document.getElementById("playerBox").innerHTML = `
-      <iframe src="${embedUrl}" allowfullscreen allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-    `;
-
-        window.history.replaceState({}, "", `?id=${malId}&ep=${ep}`);
-        showToast(`▶ Playing Episode ${ep}`);
       }
 
+      // ── HLS player ────────────────────────────────────────────────
+      function loadHLS(m3u8Url, headers) {
+        const video = document.getElementById("mainVideo");
+        if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+        }
+
+        if (Hls.isSupported()) {
+          hlsInstance = new Hls({
+            xhrSetup(xhr) {
+              if (headers.Referer)
+                xhr.setRequestHeader("Referer", headers.Referer);
+            },
+          });
+          hlsInstance.loadSource(m3u8Url);
+          hlsInstance.attachMedia(video);
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () =>
+            video.play().catch(() => {}),
+          );
+          hlsInstance.on(Hls.Events.ERROR, (_, d) => {
+            if (d.fatal)
+              setPlayerMsg("⚠️ Playback error. Try a different server.", false);
+          });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = m3u8Url;
+          video.play().catch(() => {});
+        } else {
+          setPlayerMsg("❌ HLS not supported in this browser.", false);
+        }
+      }
+
+      // ── Subtitle tracks ───────────────────────────────────────────
+      function setupSubtitles(tracks) {
+        const select = document.getElementById("subSelect");
+        const group = document.getElementById("subGroup");
+        const video = document.getElementById("mainVideo");
+
+        while (video.firstChild) video.removeChild(video.firstChild);
+        select.innerHTML = '<option value="">Off</option>';
+
+        const subs = tracks.filter(
+          (t) => t.kind === "captions" || t.kind === "subtitles" || t.file,
+        );
+        if (!subs.length) {
+          group.style.display = "none";
+          return;
+        }
+        group.style.display = "flex";
+
+        subs.forEach((t, i) => {
+          const track = document.createElement("track");
+          track.src = t.file || t.url;
+          track.kind = t.kind || "subtitles";
+          track.label = t.label || `Track ${i + 1}`;
+          track.srclang = "en";
+          if (t.default) track.default = true;
+          video.appendChild(track);
+
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.text = t.label || `Track ${i + 1}`;
+          if (t.default) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      function switchSubtitle(idx) {
+        Array.from(document.getElementById("mainVideo").textTracks).forEach(
+          (t, i) => {
+            t.mode = String(i) === idx ? "showing" : "hidden";
+          },
+        );
+      }
+
+      // ── Server / category switching ───────────────────────────────
+      function switchServer(srv) {
+        currentSrv = srv;
+        document
+          .querySelectorAll("[data-srv]")
+          .forEach((b) => b.classList.toggle("active", b.dataset.srv === srv));
+        reloadCurrentEpisode();
+      }
+
+      function switchCategory(cat) {
+        currentCat = cat;
+        document
+          .querySelectorAll("[data-cat]")
+          .forEach((b) => b.classList.toggle("active", b.dataset.cat === cat));
+        reloadCurrentEpisode();
+      }
+
+      function reloadCurrentEpisode() {
+        const ep = allEpisodes.find((e) => e.number === currentEp);
+        if (ep) playEpisode(ep.episodeId, ep.number);
+      }
+
+      // ── Sidebar ───────────────────────────────────────────────────
+      async function loadSidebar() {
+        try {
+          const res = await fetch(
+            `${JIKAN_BASE}/top/anime?filter=bypopularity&limit=10`,
+          );
+          const data = await res.json();
+          const list = document.getElementById("sidebarList");
+          data.data.forEach((a) => {
+            list.insertAdjacentHTML(
+              "beforeend",
+              `
+              <a class="sidebar-card" href="watch.html?id=${a.mal_id}">
+                <img src="${a.images.jpg.small_image_url}" alt="${a.title}"
+                     onerror="this.src='https://placehold.co/60x80/1a1a26/888?text=?'"/>
+                <div class="sidebar-card-info">
+                  <div class="sidebar-card-title">${a.title}</div>
+                  <div class="sidebar-card-meta">★ ${a.score || "N/A"} · ${a.type || "TV"}</div>
+                </div>
+              </a>`,
+            );
+          });
+        } catch (e) {
+          /* non-critical */
+        }
+      }
+
+      // ── Synopsis toggle (from original watch.html) ─────────────────
       function toggleSynopsis() {
         const el = document.getElementById("watchSynopsis");
         const btn = document.getElementById("synopsisToggle");
@@ -185,30 +699,20 @@
           : "Show more";
       }
 
-      async function loadSidebar() {
-        try {
-          const res = await fetch(
-            "https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10",
-          );
-          const data = await res.json();
-          const list = document.getElementById("sidebarList");
-          data.data.forEach((a) => {
-            list.insertAdjacentHTML(
-              "beforeend",
-              `
-          <a class="sidebar-card" href="watch.html?id=${a.mal_id}">
-            <img src="${a.images.jpg.small_image_url}" alt="${a.title}" onerror="this.src='https://via.placeholder.com/60x80'"/>
-            <div class="sidebar-card-info">
-              <div class="sidebar-card-title">${a.title}</div>
-              <div class="sidebar-card-meta">★ ${a.score || "N/A"} · ${a.type || "TV"}</div>
-            </div>
-          </a>
-        `,
-            );
-          });
-        } catch (e) {}
+      // ── Player message helpers ────────────────────────────────────
+      function setPlayerMsg(text, showSpinner) {
+        const msg = document.getElementById("playerMsg");
+        msg.classList.remove("hidden");
+        document.getElementById("playerMsgText").textContent = text;
+        document.getElementById("playerSpinner").style.display = showSpinner
+          ? "block"
+          : "none";
+      }
+      function hidePlayerMsg() {
+        document.getElementById("playerMsg").classList.add("hidden");
       }
 
+      // ── Start ─────────────────────────────────────────────────────
       loadWatch();
     </script>
   </body>
